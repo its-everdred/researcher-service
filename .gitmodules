@@ -1,6 +1,3 @@
-[submodule "EIPs"]
-	path = EIPs
-	url = https://github.com/ethereum/EIPs.git
 [submodule "data/EIPs"]
-	path = data/EIPs
-	url = https://github.com/ethereum/EIPs.git
+  path = data/EIPs
+  url = https://github.com/ethereum/EIPs.git
