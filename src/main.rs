@@ -1,5 +1,7 @@
 mod controllers;
 mod router;
+mod routes;
+mod services;
 
 use tracing_subscriber;
 
@@ -8,7 +10,7 @@ async fn main() {
     // initialize tracing
     tracing_subscriber::fmt::init();
 
-    // build our application with a route
+    // build router
     let app = router::create_router();
 
     // run our app with hyper, listening globally on port 3000

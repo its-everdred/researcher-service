@@ -1,10 +1,6 @@
-use axum::{
-    routing::get,
-    Router,
-};
-use crate::controllers::root;
+use axum::Router;
+use crate::routes;
 
 pub fn create_router() -> Router {
-    Router::new()
-        .route("/", get(root::handler))
+    routes::all_routes()
 }
