@@ -30,18 +30,24 @@ pub fn parse_eip_chunks(id: u32) -> Result<Vec<EipChunk>, String> {
         match event {
             Event::Start(Tag::Heading(..)) => {
                 if !current_content.is_empty() {
-                    chunks.push(EipChunk {
-                        eip_id: id,
-                        title: title.clone(),
-                        authors: authors.clone(),
-                        section: current_section.clone(),
-                        content: current_content.clone(),
-                        source_path: file_path.clone(),
-                    });
+                    split_and_push_chunk(
+                        &mut chunks,
+                        &current_content,
+                        &current_section,
+                        id,
+                        &title,
+                        &authors,
+                        &file_path,
+                    );
                     current_content.clear();
                 }
             }
             Event::Text(text) => current_content.push_str(&text),
+            Event::Code(text) => {
+                current_content.push_str("`");
+                current_content.push_str(&text);
+                current_content.push_str("`");
+            }
             Event::End(Tag::Heading(..)) => {
                 current_section = current_content.clone();
                 current_content.clear();
@@ -51,17 +57,63 @@ pub fn parse_eip_chunks(id: u32) -> Result<Vec<EipChunk>, String> {
     }
 
     if !current_content.is_empty() {
-        chunks.push(EipChunk {
-            eip_id: id,
-            title,
-            authors,
-            section: current_section,
-            content: current_content,
-            source_path: file_path,
-        });
+        split_and_push_chunk(
+            &mut chunks,
+            &current_content,
+            &current_section,
+            id,
+            &title,
+            &authors,
+            &file_path,
+        );
     }
 
     Ok(chunks)
+}
+
+fn split_and_push_chunk(
+    chunks: &mut Vec<EipChunk>,
+    content: &str,
+    section: &str,
+    eip_id: u32,
+    title: &str,
+    authors: &[String],
+    source_path: &str,
+) {
+    const MAX_WORDS: usize = 300;
+
+    let mut current_chunk = String::new();
+    let mut word_count = 0;
+
+    for word in content.split_whitespace() {
+        if word_count + 1 > MAX_WORDS {
+            chunks.push(EipChunk {
+                eip_id,
+                title: title.to_string(),
+                authors: authors.to_vec(),
+                section: section.to_string(),
+                content: current_chunk.clone(),
+                source_path: source_path.to_string(),
+            });
+            current_chunk.clear();
+            word_count = 0;
+        }
+
+        current_chunk.push_str(word);
+        current_chunk.push(' ');
+        word_count += 1;
+    }
+
+    if !current_chunk.is_empty() {
+        chunks.push(EipChunk {
+            eip_id,
+            title: title.to_string(),
+            authors: authors.to_vec(),
+            section: section.to_string(),
+            content: current_chunk,
+            source_path: source_path.to_string(),
+        });
+    }
 }
 
 fn extract_title(contents: &str) -> String {
